@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{ agent::Selector, bandit::KArmedBandit, environment::{ self, Environment } };
+use crate::{ agent::Selector, environment::Environment };
 
 pub struct EpsilonGreedySelector {
     epsilon: f64,

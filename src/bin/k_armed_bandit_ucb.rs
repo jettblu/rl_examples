@@ -1,4 +1,3 @@
-use rl_examples::{ agent, bandit::KArmedBandit, ucb::UCBSelector };
 use plotters::{
     backend::BitMapBackend,
     chart::{ ChartBuilder, LabelAreaPosition },
@@ -7,6 +6,7 @@ use plotters::{
     series::LineSeries,
     style::{ Color, BLACK, BLUE, GREEN, RED, WHITE },
 };
+use rl_examples::{ agent, environments::bandit::KArmedBandit, selectors::ucb::UCBSelector };
 
 fn main() {
     let k = 10;

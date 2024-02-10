@@ -6,7 +6,11 @@ use plotters::{
     series::LineSeries,
     style::{ Color, BLACK, BLUE, GREEN, RED, WHITE },
 };
-use rl_examples::{ agent::Agent, bandit::KArmedBandit, epsilon_greedy::EpsilonGreedySelector };
+use rl_examples::{
+    agent::Agent,
+    environments::bandit::KArmedBandit,
+    selectors::epsilon_greedy::EpsilonGreedySelector,
+};
 
 fn main() {
     let k = 10;

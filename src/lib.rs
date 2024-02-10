@@ -1,6 +1,4 @@
-pub mod bandit;
-pub mod ucb;
-pub mod epsilon_greedy;
-pub mod blackjack;
+pub mod environments;
+pub mod selectors;
 pub mod agent;
 pub mod environment;

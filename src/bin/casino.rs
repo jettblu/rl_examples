@@ -1,4 +1,4 @@
-use rl_examples::bandit::{ Bandit, BanditType };
+use rl_examples::environments::bandit::{ Bandit, BanditType };
 
 fn main() {
     println!("Running Casino!");
