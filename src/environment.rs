@@ -1,3 +1,5 @@
+// TODO: q value and value estimates should be handled by selector
+
 pub trait Environment {
     fn reset(&mut self);
     fn step(&mut self, action: usize) -> f64;
