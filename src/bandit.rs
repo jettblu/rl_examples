@@ -1,6 +1,8 @@
 use rand::thread_rng;
 use rand_distr::{ Distribution, Normal };
 
+use crate::environment::Environment;
+
 pub enum BanditType {
     Gaussian,
 }
@@ -144,7 +146,7 @@ impl KArmedBandit {
     /// # Returns
     ///
     /// * `()` - no return value
-    pub fn update_action_value_estimate_by_index(&mut self, index: usize, new_estimate: f64) {
+    pub fn update_q_estimate_by_index(&mut self, index: usize, new_estimate: f64) {
         self.bandits[index].update_action_value_estimate(new_estimate);
     }
 
@@ -158,7 +160,7 @@ impl KArmedBandit {
     /// # Returns
     ///
     /// * `f64` - action value estimate for bandit
-    pub fn get_action_value_estimate_by_index(&self, index: usize) -> f64 {
+    pub fn get_q_estimate_by_index(&self, index: usize) -> f64 {
         self.bandits[index].get_action_value_estimate()
     }
 
@@ -174,5 +176,85 @@ impl KArmedBandit {
     /// * `usize` - number of bandits
     pub fn num_bandits(&self) -> usize {
         self.k
+    }
+}
+
+impl Environment for KArmedBandit {
+    fn reset(&mut self) {
+        self.num_pulls = 0;
+        for bandit in self.bandits.iter_mut() {
+            bandit.num_pulls = 0;
+            bandit.total_reward = 0.0;
+            bandit.action_value_estimate = 0.0;
+        }
+    }
+
+    fn step(&mut self, action: usize) -> f64 {
+        self.pull_by_index(action)
+    }
+
+    // state is always 0 for this environment
+    fn get_state(&self) -> usize {
+        0
+    }
+
+    fn get_actions(&self) -> Vec<usize> {
+        let mut actions = vec![];
+        for i in 0..self.k {
+            actions.push(i);
+        }
+        actions
+    }
+
+    fn is_terminal(&self) -> bool {
+        false
+    }
+
+    fn update_q_estimate(&mut self, _state: usize, action: usize, new_estimate: f64) {
+        self.update_q_estimate_by_index(action, new_estimate);
+    }
+
+    fn update_value_estimate(&mut self, _state: usize, _new_estimate: f64) {
+        // do nothing
+        panic!("Not implemented")
+    }
+
+    fn get_q_estimate(&self, _state: usize, action: usize) -> f64 {
+        self.get_q_estimate_by_index(action)
+    }
+
+    fn get_value_estimate(&self, _state: usize) -> f64 {
+        // do nothing
+        panic!("Not implemented")
+    }
+
+    fn get_number_of_possible_actions(&self) -> usize {
+        self.k
+    }
+
+    fn get_number_of_possible_states(&self) -> usize {
+        1
+    }
+
+    fn get_action_count_by_state(&self, _state: usize, action: usize) -> usize {
+        self.get_number_of_pulls_by_index(action)
+    }
+
+    fn get_total_number_of_actions_taken(&self) -> usize {
+        self.num_pulls
+    }
+    fn get_q_estimates(&self, state: usize) -> Vec<f64> {
+        let mut q_estimates = vec![];
+        for i in 0..self.k {
+            q_estimates.push(self.get_q_estimate(state, i));
+        }
+        q_estimates
+    }
+    fn action_counts_by_state(&self, state: usize) -> Vec<usize> {
+        let mut action_counts = vec![];
+        for i in 0..self.k {
+            action_counts.push(self.get_number_of_pulls_by_index(i));
+        }
+        action_counts
     }
 }

@@ -1,5 +1,12 @@
-use rl_examples::{ actor::{ Actor, KBanditActor }, bandit::KArmedBandit, ucb::UCBSelector };
-use plotters::prelude::*;
+use rl_examples::{ agent, bandit::KArmedBandit, ucb::UCBSelector };
+use plotters::{
+    backend::BitMapBackend,
+    chart::{ ChartBuilder, LabelAreaPosition },
+    drawing::IntoDrawingArea,
+    element::PathElement,
+    series::LineSeries,
+    style::{ Color, BLACK, BLUE, GREEN, RED, WHITE },
+};
 
 fn main() {
     let k = 10;
@@ -98,6 +105,8 @@ fn run_for_given_confidence(
 ) -> Vec<f64> {
     println!("Running for confidence: {}", confidence);
     let mut all_rewards: Vec<Vec<f64>> = vec![];
+    // state is fixed for this problem
+    const STATE: usize = 0;
     for r in 0..independent_runs {
         if r % 100 == 0 {
             println!("Run: {}", r);
@@ -105,11 +114,11 @@ fn run_for_given_confidence(
         let mut new_rewards = vec![];
         let k_armed_bandit = KArmedBandit::new(k);
         let selector = UCBSelector::new(confidence);
-        let mut actor = KBanditActor::new(k_armed_bandit, selector);
+        let mut agent = agent::Agent::new(k_armed_bandit, selector);
         for _ in 0..num_steps {
-            let action = actor.select_action();
-            let reward = actor.take_action(action);
-            actor.update_action_value_estimate(action, reward);
+            let action = agent.select_action();
+            let reward = agent.take_action(action);
+            agent.update_q_estimate(STATE, action, reward);
             new_rewards.push(reward);
         }
         all_rewards.push(new_rewards);

@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{ actor::BanditSelector, bandit::KArmedBandit };
+use crate::{ agent::Selector, bandit::KArmedBandit, environment::{ self, Environment } };
 
 pub struct EpsilonGreedySelector {
     epsilon: f64,
@@ -14,20 +14,22 @@ impl EpsilonGreedySelector {
     }
 }
 
-impl BanditSelector for EpsilonGreedySelector {
-    fn select_action(&self, k_armed_bandit: &mut KArmedBandit) -> usize {
+impl Selector for EpsilonGreedySelector {
+    fn select_action<T: Environment>(&self, environment: &mut T) -> usize {
         let mut rng = rand::thread_rng();
+        let state = environment.get_state();
         // generate random number between 0 and 1
         let random_number = rng.gen::<f64>();
+        let number_of_possible_actions = environment.get_number_of_possible_actions();
         if random_number < self.epsilon {
-            rng.gen_range(0..k_armed_bandit.num_bandits())
+            rng.gen_range(0..number_of_possible_actions)
         } else {
             let mut max: f64 = 0.0;
             let mut max_index = 0;
-            for i in 0..k_armed_bandit.num_bandits() {
-                let current_value_estimate = k_armed_bandit.get_action_value_estimate_by_index(i);
-                if current_value_estimate >= max {
-                    max = current_value_estimate;
+            for i in 0..number_of_possible_actions {
+                let current_q_estimate = environment.get_q_estimate(state, i);
+                if current_q_estimate >= max {
+                    max = current_q_estimate;
                     max_index = i;
                 }
             }
@@ -35,18 +37,27 @@ impl BanditSelector for EpsilonGreedySelector {
         }
     }
 
-    fn update_action_value_estimate(
+    fn update_q_estimate<T: Environment>(
         &self,
-        k_armed_bandit: &mut KArmedBandit,
+        environment: &mut T,
+        state: usize,
         action: usize,
         reward: f64
     ) {
-        let current_pulls = k_armed_bandit.get_number_of_pulls_by_index(action);
-        let current_action_value_estimate =
-            k_armed_bandit.get_action_value_estimate_by_index(action);
-        let new_action_value_estimate =
-            current_action_value_estimate +
-            (1.0 / (current_pulls as f64)) * (reward - current_action_value_estimate);
-        k_armed_bandit.update_action_value_estimate_by_index(action, new_action_value_estimate);
+        let current_pulls = environment.get_action_count_by_state(state, action);
+        let current_q_estimate = environment.get_q_estimate(state, action);
+        let new_q_estimate =
+            current_q_estimate + (1.0 / (current_pulls as f64)) * (reward - current_q_estimate);
+        environment.update_q_estimate(state, action, new_q_estimate);
+    }
+
+    fn update_value_estimate<T: Environment>(
+        &self,
+        _environment: &mut T,
+        _state: usize,
+        _reward: f64
+    ) {
+        // do nothing
+        panic!("Not implemented")
     }
 }
