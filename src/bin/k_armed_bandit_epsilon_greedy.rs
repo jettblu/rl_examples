@@ -10,6 +10,7 @@ use rl_examples::{
     agent::Agent,
     environments::bandit::KArmedBandit,
     selectors::epsilon_greedy::EpsilonGreedySelector,
+    store::{ MemoryStore, Store },
 };
 
 fn main() {
@@ -103,7 +104,9 @@ fn run_for_given_epsilon(
         let mut new_rewards = vec![];
         let k_armed_bandit = KArmedBandit::new(k);
         let selector = EpsilonGreedySelector::new(epsilon);
-        let mut agent = Agent::new(k_armed_bandit, selector);
+        let q_store = MemoryStore::new();
+        let state_value_store = MemoryStore::new();
+        let mut agent = Agent::new(k_armed_bandit, selector, q_store, state_value_store);
         for _ in 0..num_steps {
             let action = agent.select_action();
             let reward = agent.take_action(action);

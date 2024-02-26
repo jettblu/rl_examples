@@ -1,4 +1,4 @@
-use crate::{ agent::Selector, environment::Environment };
+use crate::{ agent::Selector, environment::Environment, store::Store };
 
 pub struct UCBSelector {
     confidence_level: f64,
@@ -13,14 +13,15 @@ impl UCBSelector {
 }
 
 impl Selector for UCBSelector {
-    fn select_action<T: Environment>(&self, environment: &mut T) -> usize {
+    fn select_action<T: Environment, S: Store>(&self, environment: &mut T, store: &S) -> usize {
         let mut max: f64 = 0.0;
         let mut max_index = 0;
         let num_actions = environment.get_number_of_possible_actions();
         let num_pulls = environment.get_total_number_of_actions_taken();
         let state = environment.get_state();
         for i in 0..num_actions {
-            let current_value_estimate = environment.get_q_estimate(state, i);
+            let id = store.generate_id(state, i);
+            let current_value_estimate = store.get_float(id);
             let number_of_actions_for_state = environment.get_action_count_by_state(state, i);
             let confidence = (
                 (self.confidence_level * (num_pulls as f64).ln()) /
@@ -36,27 +37,30 @@ impl Selector for UCBSelector {
         max_index
     }
 
-    fn update_q_estimate<T: Environment>(
+    fn get_new_q_estimate<T: Environment, S: Store>(
         &self,
         environment: &mut T,
+        store: &S,
         state: usize,
         action: usize,
         reward: f64
-    ) {
+    ) -> f64 {
         let current_pulls = environment.get_action_count_by_state(state, action);
-        let current_action_value_estimate = environment.get_q_estimate(state, action);
+        let id = store.generate_id(state, action);
+        let current_action_value_estimate = store.get_float(id);
         let new_action_value_estimate =
             current_action_value_estimate +
             (1.0 / (current_pulls as f64)) * (reward - current_action_value_estimate);
-        environment.update_q_estimate(state, action, new_action_value_estimate);
+        new_action_value_estimate
     }
 
-    fn update_value_estimate<T: Environment>(
+    fn get_new_value_estimate<T: Environment, S: Store>(
         &self,
         _environment: &mut T,
+        _store: &S,
         _state: usize,
         _reward: f64
-    ) {
+    ) -> f64 {
         // do nothing
         panic!("Not implemented")
     }

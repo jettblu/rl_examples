@@ -14,7 +14,6 @@ pub struct Bandit {
     name: String,
     num_pulls: usize,
     total_reward: f64,
-    action_value_estimate: f64,
 }
 
 impl Bandit {
@@ -30,7 +29,6 @@ impl Bandit {
             name,
             num_pulls: 0,
             total_reward: 0.0,
-            action_value_estimate: 0.0,
         }
     }
 
@@ -52,14 +50,6 @@ impl Bandit {
 
     pub fn get_total_reward(&self) -> f64 {
         self.total_reward
-    }
-
-    pub fn update_action_value_estimate(&mut self, new_estimate: f64) {
-        self.action_value_estimate = new_estimate;
-    }
-
-    pub fn get_action_value_estimate(&self) -> f64 {
-        self.action_value_estimate
     }
 }
 
@@ -134,36 +124,6 @@ impl KArmedBandit {
         self.bandits[index].get_total_reward()
     }
 
-    ///
-    /// Update the action value estimate for a bandit by index
-    ///
-    /// # Arguments
-    ///
-    /// * `index` - usize - index of bandit
-    ///
-    /// * `new_estimate` - f64 - new estimate for bandit
-    ///
-    /// # Returns
-    ///
-    /// * `()` - no return value
-    pub fn update_q_estimate_by_index(&mut self, index: usize, new_estimate: f64) {
-        self.bandits[index].update_action_value_estimate(new_estimate);
-    }
-
-    ///
-    /// Get the action value estimate for a bandit by index
-    ///
-    /// # Arguments
-    ///
-    /// * `index` - usize - index of bandit
-    ///
-    /// # Returns
-    ///
-    /// * `f64` - action value estimate for bandit
-    pub fn get_q_estimate_by_index(&self, index: usize) -> f64 {
-        self.bandits[index].get_action_value_estimate()
-    }
-
     pub fn get_total_number_of_pulls(&self) -> usize {
         self.num_pulls
     }
@@ -185,7 +145,6 @@ impl Environment for KArmedBandit {
         for bandit in self.bandits.iter_mut() {
             bandit.num_pulls = 0;
             bandit.total_reward = 0.0;
-            bandit.action_value_estimate = 0.0;
         }
     }
 
@@ -210,19 +169,6 @@ impl Environment for KArmedBandit {
         false
     }
 
-    fn update_q_estimate(&mut self, _state: usize, action: usize, new_estimate: f64) {
-        self.update_q_estimate_by_index(action, new_estimate);
-    }
-
-    fn update_value_estimate(&mut self, _state: usize, _new_estimate: f64) {
-        // do nothing
-        panic!("Not implemented")
-    }
-
-    fn get_q_estimate(&self, _state: usize, action: usize) -> f64 {
-        self.get_q_estimate_by_index(action)
-    }
-
     fn get_value_estimate(&self, _state: usize) -> f64 {
         // do nothing
         panic!("Not implemented")
@@ -243,14 +189,7 @@ impl Environment for KArmedBandit {
     fn get_total_number_of_actions_taken(&self) -> usize {
         self.num_pulls
     }
-    fn get_q_estimates(&self, state: usize) -> Vec<f64> {
-        let mut q_estimates = vec![];
-        for i in 0..self.k {
-            q_estimates.push(self.get_q_estimate(state, i));
-        }
-        q_estimates
-    }
-    fn action_counts_by_state(&self, state: usize) -> Vec<usize> {
+    fn action_counts_by_state(&self, _state: usize) -> Vec<usize> {
         let mut action_counts = vec![];
         for i in 0..self.k {
             action_counts.push(self.get_number_of_pulls_by_index(i));

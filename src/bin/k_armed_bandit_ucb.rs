@@ -6,7 +6,12 @@ use plotters::{
     series::LineSeries,
     style::{ Color, BLACK, BLUE, GREEN, RED, WHITE },
 };
-use rl_examples::{ agent, environments::bandit::KArmedBandit, selectors::ucb::UCBSelector };
+use rl_examples::{
+    agent,
+    environments::bandit::KArmedBandit,
+    selectors::ucb::UCBSelector,
+    store::{ MemoryStore, Store },
+};
 
 fn main() {
     let k = 10;
@@ -114,7 +119,9 @@ fn run_for_given_confidence(
         let mut new_rewards = vec![];
         let k_armed_bandit = KArmedBandit::new(k);
         let selector = UCBSelector::new(confidence);
-        let mut agent = agent::Agent::new(k_armed_bandit, selector);
+        let q_store = MemoryStore::new();
+        let state_value_store = MemoryStore::new();
+        let mut agent = agent::Agent::new(k_armed_bandit, selector, q_store, state_value_store);
         for _ in 0..num_steps {
             let action = agent.select_action();
             let reward = agent.take_action(action);
