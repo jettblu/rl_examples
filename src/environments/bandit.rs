@@ -169,11 +169,6 @@ impl Environment for KArmedBandit {
         false
     }
 
-    fn get_value_estimate(&self, _state: usize) -> f64 {
-        // do nothing
-        panic!("Not implemented")
-    }
-
     fn get_number_of_possible_actions(&self) -> usize {
         self.k
     }
@@ -182,18 +177,7 @@ impl Environment for KArmedBandit {
         1
     }
 
-    fn get_action_count_by_state(&self, _state: usize, action: usize) -> usize {
-        self.get_number_of_pulls_by_index(action)
-    }
-
     fn get_total_number_of_actions_taken(&self) -> usize {
         self.num_pulls
-    }
-    fn action_counts_by_state(&self, _state: usize) -> Vec<usize> {
-        let mut action_counts = vec![];
-        for i in 0..self.k {
-            action_counts.push(self.get_number_of_pulls_by_index(i));
-        }
-        action_counts
     }
 }

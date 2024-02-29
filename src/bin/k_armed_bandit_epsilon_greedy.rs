@@ -106,7 +106,14 @@ fn run_for_given_epsilon(
         let selector = EpsilonGreedySelector::new(epsilon);
         let q_store = MemoryStore::new();
         let state_value_store = MemoryStore::new();
-        let mut agent = Agent::new(k_armed_bandit, selector, q_store, state_value_store);
+        let store_action_count = MemoryStore::new();
+        let mut agent = Agent::new(
+            k_armed_bandit,
+            selector,
+            q_store,
+            state_value_store,
+            store_action_count
+        );
         for _ in 0..num_steps {
             let action = agent.select_action();
             let reward = agent.take_action(action);

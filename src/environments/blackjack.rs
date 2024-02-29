@@ -1,9 +1,12 @@
 use rand::Rng;
 
+use crate::environment::Environment;
+
 pub struct Blackjack {
     pub dealer: Dealer,
     pub player: Player,
     pub is_player_turn: bool,
+    pub step_count: usize,
 }
 
 pub struct Dealer {
@@ -36,34 +39,44 @@ impl Blackjack {
             dealer: Dealer::new(),
             player: Player::new(),
             is_player_turn: true,
+            step_count: 0,
         }
     }
+}
 
-    pub fn reset(&mut self) {
+impl Environment for Blackjack {
+    fn reset(&mut self) {
         self.dealer = Dealer::new();
         self.player = Player::new();
         self.is_player_turn = true;
     }
 
-    pub fn step(&mut self, action: usize) -> f64 {
+    fn step(&mut self, action: usize) -> f64 {
         if self.is_player_turn {
             match action {
+                // hit case
                 0 => self.player.draw_card(),
+                // stay case
                 1 => {
                     self.is_player_turn = false;
                 }
                 _ => panic!("Invalid action"),
             }
         } else {
+            // play fixed dealer strategy if not player's turn
             while self.dealer.get_sum() < 17 {
                 self.dealer.draw_card();
             }
         }
+        // check if player busted
         if self.is_player_turn {
+            self.step_count += 1;
             if self.player.did_bust() {
                 return -1.0;
             }
         } else {
+            // if player is still alive comapre hand vs dealer's
+            // and return appropriate reward
             if self.dealer.did_bust() {
                 return 1.0;
             } else if self.dealer.get_sum() > self.player.get_sum() {
@@ -75,6 +88,35 @@ impl Blackjack {
             }
         }
         0.0
+    }
+
+    fn get_state(&self) -> usize {
+        let player_sum = self.player.get_sum();
+        let dealer_sum = self.dealer.get_sum();
+        let usable_ace = self.player.usable_ace;
+        // here we are using a simple encoding of the state
+        let state = (player_sum - 12) * 9 * 2 + (dealer_sum - 2) * 2 + (usable_ace as i32);
+        state as usize
+    }
+
+    fn get_actions(&self) -> Vec<usize> {
+        vec![0, 1]
+    }
+
+    fn is_terminal(&self) -> bool {
+        self.player.did_bust() || self.dealer.did_bust()
+    }
+
+    fn get_number_of_possible_actions(&self) -> usize {
+        2
+    }
+
+    fn get_number_of_possible_states(&self) -> usize {
+        9 * 10 * 2
+    }
+
+    fn get_total_number_of_actions_taken(&self) -> usize {
+        self.step_count
     }
 }
 

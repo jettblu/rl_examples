@@ -5,23 +5,39 @@ pub struct Agent<T: Environment, U: Selector, S: Store> {
     selector: U,
     q_store: S,
     state_value_store: S,
+    store_action_count: S,
+    total_actions_taken: usize,
 }
 
 impl<T: Environment, U: Selector, S: Store> Agent<T, U, S> {
-    pub fn new(environment: T, selector: U, q_store: S, state_value_store: S) -> Agent<T, U, S> {
+    pub fn new(
+        environment: T,
+        selector: U,
+        q_store: S,
+        state_value_store: S,
+        store_action_count: S
+    ) -> Agent<T, U, S> {
         Agent {
             environment,
             selector,
             q_store: q_store,
             state_value_store: state_value_store,
+            store_action_count,
+            total_actions_taken: 0,
         }
     }
 
     pub fn select_action(&mut self) -> usize {
-        self.selector.select_action(&mut self.environment, &self.q_store)
+        self.selector.select_action(&mut self.environment, &self.q_store, &self.store_action_count)
     }
 
     pub fn take_action(&mut self, action: usize) -> f64 {
+        // record action taken
+        let current_state = self.environment.get_state();
+        let id = self.store_action_count.generate_id(current_state, action);
+        let current_count = self.store_action_count.get_float(&id);
+        self.store_action_count.store_float(id, current_count + 1.0);
+        // take step
         self.environment.step(action)
     }
 
@@ -29,6 +45,7 @@ impl<T: Environment, U: Selector, S: Store> Agent<T, U, S> {
         let new_estimate = self.selector.get_new_q_estimate(
             &mut self.environment,
             &mut self.q_store,
+            &mut self.store_action_count,
             state,
             action,
             reward
@@ -50,10 +67,11 @@ impl<T: Environment, U: Selector, S: Store> Agent<T, U, S> {
 
     pub fn get_q_estimate(&self, state: usize, action: usize) -> f64 {
         let id = self.generate_id(state, action);
-        self.q_store.get_float(id)
+        self.q_store.get_float(&id)
     }
-    pub fn get_action_counts_by_state(&self, state: usize) -> Vec<usize> {
-        self.environment.action_counts_by_state(state)
+
+    pub fn get_total_actions_taken(&self) -> usize {
+        self.total_actions_taken
     }
 
     fn generate_id(&self, state: usize, action: usize) -> String {
@@ -61,12 +79,20 @@ impl<T: Environment, U: Selector, S: Store> Agent<T, U, S> {
     }
 }
 
+pub trait State {}
+
 pub trait Selector {
-    fn select_action<T: Environment, S: Store>(&self, environment: &mut T, store: &S) -> usize;
+    fn select_action<T: Environment, S: Store>(
+        &self,
+        environment: &mut T,
+        store: &S,
+        store_action_count: &S
+    ) -> usize;
     fn get_new_q_estimate<T: Environment, S: Store>(
         &self,
         environment: &mut T,
         store: &S,
+        store_action_count: &S,
         state: usize,
         action: usize,
         reward: f64

@@ -8,10 +8,7 @@ pub trait Environment {
     fn get_state(&self) -> usize;
     fn get_actions(&self) -> Vec<usize>;
     fn is_terminal(&self) -> bool;
-    fn get_value_estimate(&self, state: usize) -> f64;
     fn get_number_of_possible_actions(&self) -> usize;
     fn get_number_of_possible_states(&self) -> usize;
-    fn get_action_count_by_state(&self, state: usize, action: usize) -> usize;
     fn get_total_number_of_actions_taken(&self) -> usize;
-    fn action_counts_by_state(&self, state: usize) -> Vec<usize>;
 }

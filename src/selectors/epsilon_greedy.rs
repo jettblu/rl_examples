@@ -15,7 +15,12 @@ impl EpsilonGreedySelector {
 }
 
 impl Selector for EpsilonGreedySelector {
-    fn select_action<T: Environment, S: Store>(&self, environment: &mut T, store: &S) -> usize {
+    fn select_action<T: Environment, S: Store>(
+        &self,
+        environment: &mut T,
+        store: &S,
+        _store_action_count: &S
+    ) -> usize {
         let mut rng = rand::thread_rng();
         let state = environment.get_state();
         // generate random number between 0 and 1
@@ -28,7 +33,7 @@ impl Selector for EpsilonGreedySelector {
             let mut max_index = 0;
             for i in 0..number_of_possible_actions {
                 let id = store.generate_id(state, i);
-                let current_q_estimate = store.get_float(id);
+                let current_q_estimate = store.get_float(&id);
                 if current_q_estimate >= max {
                     max = current_q_estimate;
                     max_index = i;
@@ -42,13 +47,15 @@ impl Selector for EpsilonGreedySelector {
         &self,
         environment: &mut T,
         store: &S,
+        store_action_count: &S,
         state: usize,
         action: usize,
         reward: f64
     ) -> f64 {
-        let current_pulls = environment.get_action_count_by_state(state, action);
+        let action_id = store_action_count.generate_id(state, action);
+        let current_pulls = store_action_count.get_float(&action_id);
         let id = store.generate_id(state, action);
-        let current_q_estimate = store.get_float(id);
+        let current_q_estimate = store.get_float(&id);
         let new_q_estimate =
             current_q_estimate + (1.0 / (current_pulls as f64)) * (reward - current_q_estimate);
         new_q_estimate

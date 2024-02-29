@@ -13,7 +13,12 @@ impl UCBSelector {
 }
 
 impl Selector for UCBSelector {
-    fn select_action<T: Environment, S: Store>(&self, environment: &mut T, store: &S) -> usize {
+    fn select_action<T: Environment, S: Store>(
+        &self,
+        environment: &mut T,
+        store: &S,
+        store_action_count: &S
+    ) -> usize {
         let mut max: f64 = 0.0;
         let mut max_index = 0;
         let num_actions = environment.get_number_of_possible_actions();
@@ -21,11 +26,13 @@ impl Selector for UCBSelector {
         let state = environment.get_state();
         for i in 0..num_actions {
             let id = store.generate_id(state, i);
-            let current_value_estimate = store.get_float(id);
-            let number_of_actions_for_state = environment.get_action_count_by_state(state, i);
+            let current_value_estimate = store.get_float(&id);
+            let action_count_id = store_action_count.generate_id(state, i);
+            // number of actions for state action pair
+            let state_action_count = store_action_count.get_float(&action_count_id);
             let confidence = (
                 (self.confidence_level * (num_pulls as f64).ln()) /
-                (number_of_actions_for_state as f64)
+                (state_action_count as f64)
             ).sqrt();
 
             let ucb = current_value_estimate + confidence;
@@ -41,13 +48,15 @@ impl Selector for UCBSelector {
         &self,
         environment: &mut T,
         store: &S,
+        store_action_count: &S,
         state: usize,
         action: usize,
         reward: f64
     ) -> f64 {
-        let current_pulls = environment.get_action_count_by_state(state, action);
+        let action_id = store_action_count.generate_id(state, action);
+        let current_pulls = store_action_count.get_float(&action_id);
         let id = store.generate_id(state, action);
-        let current_action_value_estimate = store.get_float(id);
+        let current_action_value_estimate = store.get_float(&id);
         let new_action_value_estimate =
             current_action_value_estimate +
             (1.0 / (current_pulls as f64)) * (reward - current_action_value_estimate);
