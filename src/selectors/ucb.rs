@@ -46,7 +46,7 @@ impl Selector for UCBSelector {
 
     fn get_new_q_estimate<T: Environment, S: Store>(
         &self,
-        environment: &mut T,
+        _environment: &mut T,
         store: &S,
         store_action_count: &S,
         state: usize,

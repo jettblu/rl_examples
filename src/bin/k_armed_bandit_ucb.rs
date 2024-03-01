@@ -7,7 +7,7 @@ use plotters::{
     style::{ Color, BLACK, BLUE, GREEN, RED, WHITE },
 };
 use rl_examples::{
-    agent,
+    agent::{ self, Agent },
     environments::bandit::KArmedBandit,
     selectors::ucb::UCBSelector,
     store::{ MemoryStore, Store },
@@ -122,7 +122,7 @@ fn run_for_given_confidence(
         let q_store = MemoryStore::new();
         let state_value_store = MemoryStore::new();
         let store_action_count = MemoryStore::new();
-        let mut agent = agent::Agent::new(
+        let mut agent = agent::AgentQ::new(
             k_armed_bandit,
             selector,
             q_store,
@@ -132,7 +132,7 @@ fn run_for_given_confidence(
         for _ in 0..num_steps {
             let action = agent.select_action();
             let reward = agent.take_action(action);
-            agent.update_q_estimate(STATE, action, reward);
+            agent.update_estimate(STATE, action, reward, true);
             new_rewards.push(reward);
         }
         all_rewards.push(new_rewards);

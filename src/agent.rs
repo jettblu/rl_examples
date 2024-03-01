@@ -1,6 +1,6 @@
 use crate::{ environment::Environment, store::Store };
 
-pub struct Agent<T: Environment, U: Selector, S: Store> {
+pub struct AgentQ<T: Environment, U: Selector, S: Store> {
     environment: T,
     selector: U,
     q_store: S,
@@ -9,15 +9,21 @@ pub struct Agent<T: Environment, U: Selector, S: Store> {
     total_actions_taken: usize,
 }
 
-impl<T: Environment, U: Selector, S: Store> Agent<T, U, S> {
+pub trait Agent {
+    fn select_action(&mut self) -> usize;
+    fn take_action(&mut self, action: usize) -> f64;
+    fn update_estimate(&mut self, state: usize, action: usize, reward: f64, is_terminal: bool);
+}
+
+impl<T: Environment, U: Selector, S: Store> AgentQ<T, U, S> {
     pub fn new(
         environment: T,
         selector: U,
         q_store: S,
         state_value_store: S,
         store_action_count: S
-    ) -> Agent<T, U, S> {
-        Agent {
+    ) -> AgentQ<T, U, S> {
+        AgentQ {
             environment,
             selector,
             q_store: q_store,
@@ -41,7 +47,7 @@ impl<T: Environment, U: Selector, S: Store> Agent<T, U, S> {
         self.environment.step(action)
     }
 
-    pub fn update_q_estimate(&mut self, state: usize, action: usize, reward: f64) {
+    fn update_q_estimate(&mut self, state: usize, action: usize, reward: f64) {
         let new_estimate = self.selector.get_new_q_estimate(
             &mut self.environment,
             &mut self.q_store,
@@ -50,11 +56,11 @@ impl<T: Environment, U: Selector, S: Store> Agent<T, U, S> {
             action,
             reward
         );
-        let id: String = self.generate_id(state, action);
+        let id: String = self.q_store.generate_id(state, action);
         self.q_store.store_float(id, new_estimate);
     }
 
-    pub fn update_state_value_estimate(&mut self, state: usize, reward: f64) {
+    fn update_state_value_estimate(&mut self, state: usize, reward: f64) {
         let new_estimate = self.selector.get_new_value_estimate(
             &mut self.environment,
             &self.state_value_store,
@@ -65,17 +71,33 @@ impl<T: Environment, U: Selector, S: Store> Agent<T, U, S> {
         self.state_value_store.store_float(id, new_estimate);
     }
 
-    pub fn get_q_estimate(&self, state: usize, action: usize) -> f64 {
-        let id = self.generate_id(state, action);
+    fn get_q_estimate(&self, state: usize, action: usize) -> f64 {
+        let id = self.q_store.generate_id(state, action);
         self.q_store.get_float(&id)
     }
 
-    pub fn get_total_actions_taken(&self) -> usize {
+    fn get_total_actions_taken(&self) -> usize {
         self.total_actions_taken
     }
+}
 
-    fn generate_id(&self, state: usize, action: usize) -> String {
-        format!("{}-{}", state, action)
+impl<T: Environment, U: Selector, S: Store> Agent for AgentQ<T, U, S> {
+    fn select_action(&mut self) -> usize {
+        self.selector.select_action(&mut self.environment, &self.q_store, &self.store_action_count)
+    }
+
+    fn take_action(&mut self, action: usize) -> f64 {
+        // record action taken
+        let current_state = self.environment.get_state();
+        let id = self.store_action_count.generate_id(current_state, action);
+        let current_count = self.store_action_count.get_float(&id);
+        self.store_action_count.store_float(id, current_count + 1.0);
+        // take step
+        self.environment.step(action)
+    }
+
+    fn update_estimate(&mut self, state: usize, action: usize, reward: f64, _is_terminal: bool) {
+        self.update_q_estimate(state, action, reward);
     }
 }
 
