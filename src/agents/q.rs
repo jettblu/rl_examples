@@ -1,5 +1,7 @@
 use crate::{ environment::Environment, store::Store };
 
+use super::{ agent::Agent, selector::Selector };
+
 pub struct AgentQ<T: Environment, U: Selector, S: Store> {
     environment: T,
     selector: U,
@@ -7,12 +9,6 @@ pub struct AgentQ<T: Environment, U: Selector, S: Store> {
     state_value_store: S,
     store_action_count: S,
     total_actions_taken: usize,
-}
-
-pub trait Agent {
-    fn select_action(&mut self) -> usize;
-    fn take_action(&mut self, action: usize) -> f64;
-    fn update_estimate(&mut self, state: usize, action: usize, reward: f64, is_terminal: bool);
 }
 
 impl<T: Environment, U: Selector, S: Store> AgentQ<T, U, S> {
@@ -64,6 +60,7 @@ impl<T: Environment, U: Selector, S: Store> AgentQ<T, U, S> {
         let new_estimate = self.selector.get_new_value_estimate(
             &mut self.environment,
             &self.state_value_store,
+            &self.store_action_count,
             state,
             reward
         );
@@ -74,6 +71,11 @@ impl<T: Environment, U: Selector, S: Store> AgentQ<T, U, S> {
     fn get_q_estimate(&self, state: usize, action: usize) -> f64 {
         let id = self.q_store.generate_id(state, action);
         self.q_store.get_float(&id)
+    }
+
+    fn get_value_estimate(&self, state: usize) -> f64 {
+        let id = self.state_value_store.generate_id(state, 0);
+        self.state_value_store.get_float(&id)
     }
 
     fn get_total_actions_taken(&self) -> usize {
@@ -99,31 +101,4 @@ impl<T: Environment, U: Selector, S: Store> Agent for AgentQ<T, U, S> {
     fn update_estimate(&mut self, state: usize, action: usize, reward: f64, _is_terminal: bool) {
         self.update_q_estimate(state, action, reward);
     }
-}
-
-pub trait State {}
-
-pub trait Selector {
-    fn select_action<T: Environment, S: Store>(
-        &self,
-        environment: &mut T,
-        store: &S,
-        store_action_count: &S
-    ) -> usize;
-    fn get_new_q_estimate<T: Environment, S: Store>(
-        &self,
-        environment: &mut T,
-        store: &S,
-        store_action_count: &S,
-        state: usize,
-        action: usize,
-        reward: f64
-    ) -> f64;
-    fn get_new_value_estimate<T: Environment, S: Store>(
-        &self,
-        environment: &mut T,
-        store: &S,
-        state: usize,
-        reward: f64
-    ) -> f64;
 }

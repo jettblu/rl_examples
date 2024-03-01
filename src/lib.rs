@@ -1,5 +1,5 @@
 pub mod environments;
 pub mod selectors;
-pub mod agent;
+pub mod agents;
 pub mod environment;
 pub mod store;

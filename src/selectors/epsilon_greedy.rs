@@ -1,6 +1,6 @@
 use rand::Rng;
 
-use crate::{ agent::Selector, environment::Environment, store::Store };
+use crate::{ agents::selector::Selector, environment::Environment, store::Store };
 
 pub struct EpsilonGreedySelector {
     epsilon: f64,
@@ -65,6 +65,7 @@ impl Selector for EpsilonGreedySelector {
         &self,
         _environment: &mut T,
         _store: &S,
+        _store_action_count: &S,
         _state: usize,
         _reward: f64
     ) -> f64 {

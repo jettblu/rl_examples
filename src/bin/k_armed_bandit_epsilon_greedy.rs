@@ -7,7 +7,7 @@ use plotters::{
     style::{ Color, BLACK, BLUE, GREEN, RED, WHITE },
 };
 use rl_examples::{
-    agent::{ Agent, AgentQ },
+    agents::{ agent::Agent, q::AgentQ },
     environments::bandit::KArmedBandit,
     selectors::epsilon_greedy::EpsilonGreedySelector,
     store::{ MemoryStore, Store },

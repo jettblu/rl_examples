@@ -1,4 +1,4 @@
-use crate::{ agent::Selector, environment::Environment, store::Store };
+use crate::{ agents::selector::Selector, environment::Environment, store::Store };
 
 pub struct UCBSelector {
     confidence_level: f64,
@@ -67,6 +67,7 @@ impl Selector for UCBSelector {
         &self,
         _environment: &mut T,
         _store: &S,
+        _store_action_count: &S,
         _state: usize,
         _reward: f64
     ) -> f64 {
