@@ -36,7 +36,7 @@ impl<T: Environment, U: Selector, S: Store> AgentQ<T, U, S> {
     pub fn take_action(&mut self, action: usize) -> f64 {
         // record action taken
         let current_state = self.environment.get_state();
-        let id = self.store_action_count.generate_id(current_state, action);
+        let id = self.store_action_count.generate_id(current_state, Some(action));
         let current_count = self.store_action_count.get_float(&id);
         self.store_action_count.store_float(id, current_count + 1.0);
         // take step
@@ -52,7 +52,7 @@ impl<T: Environment, U: Selector, S: Store> AgentQ<T, U, S> {
             action,
             reward
         );
-        let id: String = self.q_store.generate_id(state, action);
+        let id: String = self.q_store.generate_id(state, Some(action));
         self.q_store.store_float(id, new_estimate);
     }
 
@@ -69,12 +69,12 @@ impl<T: Environment, U: Selector, S: Store> AgentQ<T, U, S> {
     }
 
     fn get_q_estimate(&self, state: usize, action: usize) -> f64 {
-        let id = self.q_store.generate_id(state, action);
+        let id = self.q_store.generate_id(state, Some(action));
         self.q_store.get_float(&id)
     }
 
     fn get_value_estimate(&self, state: usize) -> f64 {
-        let id = self.state_value_store.generate_id(state, 0);
+        let id = self.state_value_store.generate_id(state, None);
         self.state_value_store.get_float(&id)
     }
 
@@ -91,7 +91,7 @@ impl<T: Environment, U: Selector, S: Store> Agent for AgentQ<T, U, S> {
     fn take_action(&mut self, action: usize) -> f64 {
         // record action taken
         let current_state = self.environment.get_state();
-        let id = self.store_action_count.generate_id(current_state, action);
+        let id = self.store_action_count.generate_id(current_state, Some(action));
         let current_count = self.store_action_count.get_float(&id);
         self.store_action_count.store_float(id, current_count + 1.0);
         // take step

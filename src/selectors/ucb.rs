@@ -25,9 +25,9 @@ impl Selector for UCBSelector {
         let num_pulls = environment.get_total_number_of_actions_taken();
         let state = environment.get_state();
         for i in 0..num_actions {
-            let id = store.generate_id(state, i);
+            let id = store.generate_id(state, Some(i));
             let current_value_estimate = store.get_float(&id);
-            let action_count_id = store_action_count.generate_id(state, i);
+            let action_count_id = store_action_count.generate_id(state, Some(i));
             // number of actions for state action pair
             let state_action_count = store_action_count.get_float(&action_count_id);
             let confidence = (
@@ -53,9 +53,9 @@ impl Selector for UCBSelector {
         action: usize,
         reward: f64
     ) -> f64 {
-        let action_id = store_action_count.generate_id(state, action);
+        let action_id = store_action_count.generate_id(state, Some(action));
         let current_pulls = store_action_count.get_float(&action_id);
-        let id = store.generate_id(state, action);
+        let id = store.generate_id(state, Some(action));
         let current_action_value_estimate = store.get_float(&id);
         let new_action_value_estimate =
             current_action_value_estimate +

@@ -32,7 +32,7 @@ impl Selector for EpsilonGreedySelector {
             let mut max: f64 = 0.0;
             let mut max_index = 0;
             for i in 0..number_of_possible_actions {
-                let id = store.generate_id(state, i);
+                let id = store.generate_id(state, Some(i));
                 let current_q_estimate = store.get_float(&id);
                 if current_q_estimate >= max {
                     max = current_q_estimate;
@@ -52,24 +52,37 @@ impl Selector for EpsilonGreedySelector {
         action: usize,
         reward: f64
     ) -> f64 {
-        let action_id = store_action_count.generate_id(state, action);
+        let action_id = store_action_count.generate_id(state, Some(action));
         let current_pulls = store_action_count.get_float(&action_id);
-        let id = store.generate_id(state, action);
+        let id = store.generate_id(state, Some(action));
         let current_q_estimate = store.get_float(&id);
         let new_q_estimate =
             current_q_estimate + (1.0 / (current_pulls as f64)) * (reward - current_q_estimate);
         new_q_estimate
     }
 
+    ///
+    /// Get new value estimate
+    ///
+    /// # Arguments
+    ///
+    /// * `environment` - &mut T - environment
+    /// * `store` - &S - store
+    /// * `store_state_count` - &S - store that maps state to number of times state has been visited
+    /// * `state` - usize - state
     fn get_new_value_estimate<T: Environment, S: Store>(
         &self,
-        _environment: &mut T,
-        _store: &S,
-        _store_action_count: &S,
-        _state: usize,
-        _reward: f64
+        environment: &mut T,
+        store: &S,
+        store_state_count: &S,
+        state: usize,
+        reward: f64
     ) -> f64 {
-        // do nothing
-        panic!("Not implemented")
+        let id = store.generate_id(state, None);
+        let current_value_estimate = store.get_float(&id);
+        let new_value_estimate =
+            current_value_estimate +
+            (1.0 / (store_state_count.get_float(&id) + 1.0)) * (reward - current_value_estimate);
+        new_value_estimate
     }
 }
