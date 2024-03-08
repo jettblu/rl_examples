@@ -48,10 +48,19 @@ impl Environment for Blackjack {
     fn reset(&mut self) {
         self.dealer = Dealer::new();
         self.player = Player::new();
+        // draw two cards for player and dealer
+        self.player.draw_card();
+        self.dealer.draw_card();
+        self.player.draw_card();
+        self.dealer.draw_card();
+        println!("Starting Player sum: {}", self.player.get_sum());
+        println!("Starting Dealer sum: {}", self.dealer.get_sum());
         self.is_player_turn = true;
     }
 
     fn step(&mut self, action: usize) -> f64 {
+        println!("Action: {}", action);
+
         if self.is_player_turn {
             match action {
                 // hit case
@@ -63,26 +72,22 @@ impl Environment for Blackjack {
                 _ => panic!("Invalid action"),
             }
         } else {
+            println!("Dealer's turn");
             // play fixed dealer strategy if not player's turn
             while self.dealer.get_sum() < 17 {
                 self.dealer.draw_card();
             }
         }
-        // check if player busted
-        if self.is_player_turn {
-            self.step_count += 1;
+        // return reward
+        if self.is_terminal() {
             if self.player.did_bust() {
                 return -1.0;
-            }
-        } else {
-            // if player is still alive comapre hand vs dealer's
-            // and return appropriate reward
-            if self.dealer.did_bust() {
+            } else if self.dealer.did_bust() {
                 return 1.0;
-            } else if self.dealer.get_sum() > self.player.get_sum() {
+            } else if self.player.get_sum() > self.dealer.get_sum() {
+                return 1.0;
+            } else if self.player.get_sum() < self.dealer.get_sum() {
                 return -1.0;
-            } else if self.dealer.get_sum() < self.player.get_sum() {
-                return 1.0;
             } else {
                 return 0.0;
             }
@@ -104,7 +109,11 @@ impl Environment for Blackjack {
     }
 
     fn is_terminal(&self) -> bool {
-        self.player.did_bust() || self.dealer.did_bust()
+        println!("Player sum: {}", self.player.get_sum());
+        println!("Dealer sum: {}", self.dealer.get_sum());
+        self.player.did_bust() ||
+            self.dealer.did_bust() ||
+            (!self.is_player_turn && self.dealer.get_sum() >= 17)
     }
 
     fn get_number_of_possible_actions(&self) -> usize {
