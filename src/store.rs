@@ -1,8 +1,11 @@
 use std::collections::HashMap;
 
 pub trait Store {
-    fn generate_id(&self, state: usize, action: usize) -> String {
-        format!("{}-{}", state, action)
+    fn generate_id(&self, state: usize, action: Option<usize>) -> String {
+        match action {
+            Some(action) => format!("{}-{}", state, action),
+            None => format!("{}", state),
+        }
     }
     fn store_float(&mut self, key: String, value: f64);
     fn get_float(&self, key: &String) -> f64;
