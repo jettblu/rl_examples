@@ -12,7 +12,7 @@ pub trait Selector {
         environment: &mut T,
         store: &S,
         store_action_count: &S,
-        state: usize,
+        state: String,
         action: usize,
         reward: f64
     ) -> f64;
@@ -21,7 +21,7 @@ pub trait Selector {
         environment: &mut T,
         store: &S,
         store_action_count: &S,
-        state: usize,
+        state: String,
         reward: f64
     ) -> f64;
 }

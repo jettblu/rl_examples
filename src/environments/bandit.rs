@@ -148,13 +148,16 @@ impl Environment for KArmedBandit {
         }
     }
 
+    fn all_possible_states(&self) -> Vec<String> {
+        vec!["0".to_string()]
+    }
     fn step(&mut self, action: usize) -> f64 {
         self.pull_by_index(action)
     }
 
     // state is always 0 for this environment
-    fn get_state(&self) -> usize {
-        0
+    fn get_state(&self) -> String {
+        "0".to_string()
     }
 
     fn get_actions(&self) -> Vec<usize> {

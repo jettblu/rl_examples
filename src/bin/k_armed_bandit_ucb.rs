@@ -111,7 +111,7 @@ fn run_for_given_confidence(
     println!("Running for confidence: {}", confidence);
     let mut all_rewards: Vec<Vec<f64>> = vec![];
     // state is fixed for this problem
-    const STATE: usize = 0;
+    let state = "0".to_string();
     for r in 0..independent_runs {
         if r % 100 == 0 {
             println!("Run: {}", r);
@@ -132,7 +132,7 @@ fn run_for_given_confidence(
         for _ in 0..num_steps {
             let action = agent.select_action();
             let reward = agent.take_action(action);
-            agent.update_estimate(STATE, action, reward, true);
+            agent.update_estimate(state.clone(), action, reward, true);
             new_rewards.push(reward);
         }
         all_rewards.push(new_rewards);

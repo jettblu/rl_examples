@@ -52,14 +52,22 @@ impl Environment for Blackjack {
         self.player.draw_card();
         self.dealer.draw_card();
         self.player.draw_card();
-        self.dealer.draw_card();
-        println!("Starting Player sum: {}", self.player.get_sum());
-        println!("Starting Dealer sum: {}", self.dealer.get_sum());
         self.is_player_turn = true;
+        self.step_count = 0;
     }
-
+    fn all_possible_states(&self) -> Vec<String> {
+        let mut states = Vec::new();
+        for i in 12..22 {
+            for j in 2..12 {
+                for k in 0..2 {
+                    states.push(encode_state(i, j, k == 1));
+                }
+            }
+        }
+        states
+    }
     fn step(&mut self, action: usize) -> f64 {
-        println!("Action: {}", action);
+        self.step_count += 1;
 
         if self.is_player_turn {
             match action {
@@ -95,13 +103,13 @@ impl Environment for Blackjack {
         0.0
     }
 
-    fn get_state(&self) -> usize {
+    fn get_state(&self) -> String {
         let player_sum = self.player.get_sum();
         let dealer_sum = self.dealer.get_sum();
         let usable_ace = self.player.usable_ace;
         // here we are using a simple encoding of the state
-        let state = (player_sum - 12) * 9 * 2 + (dealer_sum - 2) * 2 + (usable_ace as i32);
-        state as usize
+        let state = encode_state(player_sum, dealer_sum, usable_ace);
+        state
     }
 
     fn get_actions(&self) -> Vec<usize> {
@@ -109,8 +117,6 @@ impl Environment for Blackjack {
     }
 
     fn is_terminal(&self) -> bool {
-        println!("Player sum: {}", self.player.get_sum());
-        println!("Dealer sum: {}", self.dealer.get_sum());
         self.player.did_bust() ||
             self.dealer.did_bust() ||
             (!self.is_player_turn && self.dealer.get_sum() >= 17)
@@ -148,6 +154,25 @@ impl Player {
     }
 }
 
+// we have 10 possible player sums (12-21), 19
+pub fn encode_state(player_sum: i32, dealer_sum: i32, usable_ace: bool) -> String {
+    let mut state = String::new();
+    state.push_str(&player_sum.to_string());
+    state.push_str("-");
+    state.push_str(&dealer_sum.to_string());
+    state.push_str("-");
+    state.push_str(&usable_ace.to_string());
+    state
+}
+
+pub fn decode_state(state: String) -> (usize, usize, bool) {
+    let parts: Vec<&str> = state.split("-").collect();
+    let player_sum = parts[0].parse::<usize>().unwrap();
+    let dealer_sum = parts[1].parse::<usize>().unwrap();
+    let usable_ace = parts[2].parse::<bool>().unwrap();
+    (player_sum, dealer_sum, usable_ace)
+}
+
 impl BlackJackPlayer for Dealer {
     fn draw_card(&mut self) {
         // draw card from deck
@@ -173,6 +198,11 @@ impl BlackJackPlayer for Player {
         if card.value == 1 && self.sum <= 10 {
             card.value = 11;
             self.usable_ace = true;
+        }
+        // if we have a usable ace and the sum is greater than 21, subtract 10 from the sum
+        if self.sum + card.value > 21 && self.usable_ace {
+            self.sum -= 10;
+            self.usable_ace = false;
         }
         self.sum += card.value;
         self.hand.push(card);

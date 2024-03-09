@@ -1,6 +1,6 @@
 use rl_examples::{
     agents::mcts::AgentMcts,
-    environments::blackjack::Blackjack,
+    environments::blackjack::{ decode_state, Blackjack },
     selectors::epsilon_greedy::EpsilonGreedySelector,
     store::{ MemoryStore, Store },
 };
@@ -10,26 +10,29 @@ use plotters::{
     drawing::IntoDrawingArea,
     element::PathElement,
     series::LineSeries,
-    style::{ Color, BLACK, BLUE, GREEN, RED, WHITE },
+    style::{ Color, BLACK, GREEN, WHITE },
 };
 
+// TODO: UPDATE GRAPH TO DEPICT VALUE ESTIMATES
 fn main() {
     println!("Running Blackjack!");
-    let mut blackjack = Blackjack::new();
+    let blackjack = Blackjack::new();
     let epsilon = 0.1;
     let selector = EpsilonGreedySelector::new(epsilon);
     let q_store = MemoryStore::new();
     let state_value_store = MemoryStore::new();
     let store_action_count = MemoryStore::new();
+    let store_state_count = MemoryStore::new();
     let mut agent = AgentMcts::new(
         blackjack,
         selector,
         q_store,
         state_value_store,
-        store_action_count
+        store_action_count,
+        store_state_count
     );
-    // now run the agent for 100 episodes
-    let num_episodes: usize = 100;
+    // now run the agent through independent episodes
+    let num_episodes: usize = 250000;
     let mut all_rewards: Vec<f64> = vec![];
     for i in 0..num_episodes {
         println!("Running episode: {}", i + 1);
@@ -38,6 +41,8 @@ fn main() {
         println!("Total reward: {}", total_reward);
         all_rewards.push(total_reward);
     }
+    // get state value estimates
+    get_value_estimates(&agent);
     // now plot the average rewards using plotters crate
     let plot_location = "plots/blackjack.png";
     let root_area = BitMapBackend::new(plot_location, (600, 400)).into_drawing_area();
@@ -75,4 +80,19 @@ fn main() {
         .unwrap();
 
     println!("Plot saved at: {}", plot_location);
+}
+
+fn get_value_estimates(
+    agent: &AgentMcts<Blackjack, EpsilonGreedySelector, MemoryStore>
+) -> Vec<f64> {
+    let mut value_estimates: Vec<f64> = vec![];
+    let states = agent.all_possible_states();
+    for state in states {
+        let state_value = agent.get_state_value_estimate(state.clone());
+        let state_count = agent.get_state_visit_count(state.clone());
+        let state_str = decode_state(state.clone());
+        println!("State: {:?}, Value: {}, Count: {}", state_str, state_value, state_count);
+        value_estimates.push(state_value);
+    }
+    value_estimates
 }

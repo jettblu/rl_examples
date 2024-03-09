@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 pub trait Store {
-    fn generate_id(&self, state: usize, action: Option<usize>) -> String {
+    fn generate_id(&self, state: String, action: Option<usize>) -> String {
         match action {
             Some(action) => format!("{}-{}", state, action),
             None => format!("{}", state),

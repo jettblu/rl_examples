@@ -32,7 +32,7 @@ impl Selector for EpsilonGreedySelector {
             let mut max: f64 = 0.0;
             let mut max_index = 0;
             for i in 0..number_of_possible_actions {
-                let id = store.generate_id(state, Some(i));
+                let id = store.generate_id(state.clone(), Some(i));
                 let current_q_estimate = store.get_float(&id);
                 if current_q_estimate >= max {
                     max = current_q_estimate;
@@ -48,16 +48,16 @@ impl Selector for EpsilonGreedySelector {
         _environment: &mut T,
         store: &S,
         store_action_count: &S,
-        state: usize,
+        state: String,
         action: usize,
         reward: f64
     ) -> f64 {
-        let action_id = store_action_count.generate_id(state, Some(action));
-        let current_pulls = store_action_count.get_float(&action_id);
+        let action_id = store_action_count.generate_id(state.clone(), Some(action));
+        let num_visits = store_action_count.get_float(&action_id);
         let id = store.generate_id(state, Some(action));
         let current_q_estimate = store.get_float(&id);
         let new_q_estimate =
-            current_q_estimate + (1.0 / (current_pulls as f64)) * (reward - current_q_estimate);
+            current_q_estimate + (1.0 / (num_visits as f64)) * (reward - current_q_estimate);
         new_q_estimate
     }
 
@@ -75,7 +75,7 @@ impl Selector for EpsilonGreedySelector {
         environment: &mut T,
         store: &S,
         store_state_count: &S,
-        state: usize,
+        state: String,
         reward: f64
     ) -> f64 {
         let id = store.generate_id(state, None);

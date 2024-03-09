@@ -43,12 +43,12 @@ impl<T: Environment, U: Selector, S: Store> AgentQ<T, U, S> {
         self.environment.step(action)
     }
 
-    fn update_q_estimate(&mut self, state: usize, action: usize, reward: f64) {
+    fn update_q_estimate(&mut self, state: String, action: usize, reward: f64) {
         let new_estimate = self.selector.get_new_q_estimate(
             &mut self.environment,
             &mut self.q_store,
             &mut self.store_action_count,
-            state,
+            state.clone(),
             action,
             reward
         );
@@ -56,24 +56,24 @@ impl<T: Environment, U: Selector, S: Store> AgentQ<T, U, S> {
         self.q_store.store_float(id, new_estimate);
     }
 
-    fn update_state_value_estimate(&mut self, state: usize, reward: f64) {
+    fn update_state_value_estimate(&mut self, state: String, reward: f64) {
         let new_estimate = self.selector.get_new_value_estimate(
             &mut self.environment,
             &self.state_value_store,
             &self.store_action_count,
-            state,
+            state.clone(),
             reward
         );
         let id: String = format!("{}", state);
         self.state_value_store.store_float(id, new_estimate);
     }
 
-    fn get_q_estimate(&self, state: usize, action: usize) -> f64 {
+    fn get_q_estimate(&self, state: String, action: usize) -> f64 {
         let id = self.q_store.generate_id(state, Some(action));
         self.q_store.get_float(&id)
     }
 
-    fn get_value_estimate(&self, state: usize) -> f64 {
+    fn get_value_estimate(&self, state: String) -> f64 {
         let id = self.state_value_store.generate_id(state, None);
         self.state_value_store.get_float(&id)
     }
@@ -98,7 +98,7 @@ impl<T: Environment, U: Selector, S: Store> Agent for AgentQ<T, U, S> {
         self.environment.step(action)
     }
 
-    fn update_estimate(&mut self, state: usize, action: usize, reward: f64, _is_terminal: bool) {
+    fn update_estimate(&mut self, state: String, action: usize, reward: f64, _is_terminal: bool) {
         self.update_q_estimate(state, action, reward);
     }
 }
